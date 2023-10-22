@@ -128,7 +128,7 @@ def hello_send(message: Message) -> None:
             bot.send_message(message.chat.id, random.choice(hello_commands) + "\nДля регистрации, "
                                                                               "используй команду /start")
     else:
-        bot.send_message(message.chat.id, "Не понял тебя :-) Для помощи и вызова команд можешь написать /start")
+        bot.send_message(message.chat.id, "Не понял тебя. Для помощи и вызова команд можешь написать /start")
     bot.set_state(message.from_user.id, States.base, message.chat.id)
 
 

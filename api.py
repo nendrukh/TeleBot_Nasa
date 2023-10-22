@@ -14,14 +14,13 @@ def api_request_img_day(date) -> str:
     })
     response_json = response.json()
 
-    if response_json["msg"] == "Date must be between Jun 16, 1995 and Oct 05, 2023.":
+    if response.status_code == 400:
         return "За эту дату фоток нет, введи другую.\n" \
                "Можно вводить дату от 16.01.1995 до сегодняшнего дня.\n" \
                "За сегодняшний день фоток может не быть (у NASA).\n" \
                "\nПосмотреть все команды можно через команду /start"
     return f"Картинка: {response_json['hdurl']}\n" \
-           f"С заголовком: {response_json['title']}\n" \
-           "P.S. Переводи сам, бесплатных API-переводчиков пока не нашел :-("
+           f"С описанием: {response_json['title']}\n"
 
 
 def api_request_mars(earth_date, camera: str) -> list:
