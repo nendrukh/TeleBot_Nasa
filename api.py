@@ -24,16 +24,18 @@ def api_request_img_day(date: datetime.date) -> str:
 
     if response.status_code == 400:
         now_date: datetime.date = datetime.datetime.now()
-        return "За эту дату фоток нет, введи другую.\n" \
-               f"Можно вводить дату от 16.01.1995 до {now_date.strftime("%d.%m.%Y")}.\n" \
-               "За сегодняшний день фоток ещё может не быть.\n" \
-               "\nПосмотреть все команды можно через команду /start"
+        return f"""
+За эту дату фоток нет, введи другую.
+Можно вводить дату от 16.01.1995 до {now_date.strftime("%d.%m.%Y")}.
+За сегодняшний день фоток ещё может не быть.
+Посмотреть все команды можно через команду /start
+"""
     try:
         image: str = response_json["hdurl"]
     except KeyError:
         image: str = response_json["url"]
-    return f"Картинка: {image}\n" \
-           f"С описанием: {response_json["title"]}\n"
+    return f"""Картинка: {image}"
+           С описанием: {response_json["title"]}"""
 
 
 def api_request_mars(earth_date: datetime.date, camera: str) -> list:
