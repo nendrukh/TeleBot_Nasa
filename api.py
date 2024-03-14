@@ -34,8 +34,10 @@ def api_request_img_day(date: datetime.date) -> str:
         image: str = response_json["hdurl"]
     except KeyError:
         image: str = response_json["url"]
-    return f"""Картинка: {image}"
-           С описанием: {response_json["title"]}"""
+    return f"""
+Картинка: {image}
+С описанием: {response_json["title"]}
+"""
 
 
 def api_request_mars(earth_date: datetime.date, camera: str) -> list:

@@ -59,9 +59,8 @@ def set_camera_for_mars(message: Message) -> None:
     """
     bot.send_message(
         message.chat.id, """
-Могу отправить тебе 5 фоток (может меньше) с Марса от марсоходов из архива NASA,
-но для этого мне понадобится, чтобы ты
-указал камеру, с которой тебе нужны фотки:
+Могу отправить тебе 5 фоток (может меньше) с Марса из архива NASA.
+Укажи камеру, с которой тебе нужны фотки:
 """)
 
     bot.send_message(
@@ -91,7 +90,7 @@ def set_sol_for_mars(message: Message) -> None:
     else:
         bot.send_message(message.chat.id, "Камера указана не в правильном формате.")
         bot.send_message(message.chat.id, """
-        Для выбора фронтальной камеры напиши: фронт
+Для выбора фронтальной камеры напиши: фронт
 Для задней камеры напиши: задняя
 Для мачтовой камеры напиши: мачта
 """)
@@ -171,7 +170,7 @@ def hello_send(message: Message) -> None:
             bot.send_message(message.chat.id, random.choice(hello_commands) + ", " + user_name)
         else:
             bot.send_message(message.chat.id,
-                             random.choice(hello_commands) + "Для регистрации, используй команду /start")
+                             random.choice(hello_commands) + "\nДля регистрации, используй команду /start")
     else:
         bot.send_message(message.chat.id, "Не понял тебя. Для помощи и вызова команд можешь написать /start")
     bot.set_state(message.from_user.id, States.base, message.chat.id)
