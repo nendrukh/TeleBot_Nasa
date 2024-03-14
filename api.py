@@ -1,4 +1,6 @@
 import requests
+import datetime
+from requests import Response
 from config import API_KEY
 
 
@@ -7,40 +9,59 @@ class ParamMars:
     earth_date = None
 
 
-def api_request_img_day(date) -> str:
-    response = requests.get("https://api.nasa.gov/planetary/apod", params={
+def api_request_img_day(date: datetime.date) -> str:
+    """
+    We use NASA's API to get picture of the day.
+    In response we get json from which we get an image using the 'hdurl' or 'url' keys
+    :param date: date for which the picture is needed. Example 2024-01-01
+    :return: image and description (str)
+    """
+    response: Response = requests.get("https://api.nasa.gov/planetary/apod", params={
         "date": date,
         "api_key": API_KEY
     })
     response_json = response.json()
 
     if response.status_code == 400:
+        now_date: datetime.date = datetime.datetime.now()
         return "За эту дату фоток нет, введи другую.\n" \
-               "Можно вводить дату от 16.01.1995 до сегодняшнего дня.\n" \
-               "За сегодняшний день фоток может не быть (у NASA).\n" \
+               f"Можно вводить дату от 16.01.1995 до {now_date.strftime("%d.%m.%Y")}.\n" \
+               "За сегодняшний день фоток ещё может не быть.\n" \
                "\nПосмотреть все команды можно через команду /start"
-    return f"Картинка: {response_json['hdurl']}\n" \
-           f"С описанием: {response_json['title']}\n"
+    try:
+        image: str = response_json["hdurl"]
+    except KeyError:
+        image: str = response_json["url"]
+    return f"Картинка: {image}\n" \
+           f"С описанием: {response_json["title"]}\n"
 
 
-def api_request_mars(earth_date, camera: str) -> list:
-    if camera == "Фронт":
-        camera = "FHAZ"
-    elif camera == "Задняя":
-        camera = "RHAZ"
+def api_request_mars(earth_date: datetime.date, camera: str) -> list:
+    """
+    We use NASA's API to get photos from Mars.
+    In response, we receive json, from which we obtain an array with links to images using the “photos” key.
+    We take links to photos using the "img src" key in the array object
+    :param earth_date: date for which photos are needed. Example 2024-01-01
+    :param camera: camera type
+    :return: list with links to photos or text in a list with no photos
+    """
+    if camera == "Фронт" or camera == "фронт":
+        camera: str = "FHAZ"
+    elif camera == "Задняя" or camera == "задняя":
+        camera: str = "RHAZ"
     else:
-        camera = "MAST"
+        camera: str = "MAST"
     response = requests.get("https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/photos", params={
         "earth_date": earth_date,
         "camera": camera,
         "api_key": API_KEY
     })
-    response_json = response.json()
+    response_json: dict = response.json()
 
     if len(response_json["photos"]) == 0:
-        return list(["Фоток нет. Попробуй другую дату.\nПосмотреть все команды можно через команду /start"])
+        return list(["Фоток нет. Попробуй другую дату."])
 
-    count = 0
+    count: int = 0
     result = list()
     for i_object in response_json['photos']:
         if count == 5:

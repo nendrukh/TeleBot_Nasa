@@ -17,25 +17,32 @@ bot = telebot.TeleBot(BOT_TOKEN, state_storage=state_storage)
 
 @bot.message_handler(commands=["start", "help"])
 def start_bot(message: Message) -> None:
-    user_id = message.from_user.id
-    username = message.from_user.username
-    first_name = message.from_user.first_name
-    last_name = message.from_user.last_name
+    r"""
+    Message handler: '\help', '\start' from the user.
+    We add the user to the database if we have not done this before
+    """
+    user_id: int = message.from_user.id
+    username: str = message.from_user.username
+    first_name: str = message.from_user.first_name
+    last_name: str = message.from_user.last_name
 
-    user = User.select().where(User.username == username).first()
-    if not user:
+    try:
         User.create(
             user_id=user_id,
             username=username,
             first_name=first_name,
             last_name=last_name,
         )
-        bot.send_message(message.chat.id, "Я новый бот в телеграмме. Пока что я в процессе разработки 🙂"
-                                          "Меня планируют интегрировать с NASA\n"
-                                          "- /image_day. Получить фото дня от NASA по дате")
-    else:
-        bot.send_message(message.chat.id, f"Рад снова видеть тебя, {username} 🙂\n"
-                                          "Напомню команды:\n"
+        bot.send_message(message.chat.id,
+                         "Привет! Я новый бот в телеграмме 🙂"
+                         "Я интегрирован с NASA.\n"
+                         "Доступные команды: \n" 
+                         "- /image_day Получить фото дня от NASA по дате \n"
+                         "- /mars Получить фотки с Марса, а именно с марсоходов с разных камер"
+                         )
+    except:
+        bot.send_message(message.chat.id, f"Рад снова видеть тебя, {username} 🙂")
+        bot.send_message(message.chat.id, "Доступные команды:\n"
                                           "- /image_day Получить фото дня от NASA по дате\n"
                                           "- /mars Получить фотки с Марса, а именно с марсоходов из разных камер")
     bot.set_state(message.from_user.id, States.base, message.chat.id)
@@ -43,9 +50,14 @@ def start_bot(message: Message) -> None:
 
 @bot.message_handler(commands=["mars"])
 def set_camera_for_mars(message: Message) -> None:
+    r"""
+    Message handler: '\mars' from user.
+    We request the type of camera from which photographs are needed.
+    Change the bot state to set_camera
+    """
     bot.send_message(
         message.chat.id,
-        "Могу отправить тебе 5 фоток (может и меньше) с Марса от марсоходов из архива NASA, "
+        "Могу отправить тебе 5 фоток (может меньше) с Марса от марсоходов из архива NASA, "
         "но для этого мне понадобится, чтобы ты "
         "указал камеру, с которой тебе нужны фотки:")
 
@@ -60,25 +72,33 @@ def set_camera_for_mars(message: Message) -> None:
 
 @bot.message_handler(state=States.set_camera)
 def set_sol_for_mars(message: Message) -> None:
+    """
+    Bot state handler set_camera.
+    At the input to the function, we check that the camera type is correct and request the date.
+    Change the bot state to send_pictures
+    """
     if re.search(r"\b([Фф]ронт|[Зз]адняя|[Мм]ачта)\b", message.text):
         ParamMars.camera = message.text
         bot.send_message(message.chat.id, "Теперь укажи, пожалуйста, дату за которую отправить фотки\n"
                                           "В формате: 01.01.2023")
         bot.set_state(message.from_user.id, States.send_pictures, message.chat.id)
     else:
-        bot.send_message(message.chat.id, "Камера указана не в нужном формате. Необходимо ввести так:\n"
-                                          "Камера предотвращения фронтальной опасности, напиши - фронт\n"
-                                          "Задняя камера предотвращения опасностей, напиши - задняя\n"
-                                          "Мачтовая камера, напиши - мачта"
-                         )
-        return
+        bot.send_message(message.chat.id, "Камера указана не в правильном формате.")
+        bot.send_message(message.chat.id, "Для выбора фронтальной камеры напиши: фронт\n"
+                                          "Для задней камеры напиши: задняя\n"
+                                          "Для мачтовой камеры напиши: мачта")
+        bot.send_message(message.chat.id, "Посмотреть все команды можно через команду /start")
 
 
 @bot.message_handler(state=States.send_pictures)
 def send_pict_from_mars(message: Message) -> None:
+    """
+    Bot state handler send_pictures.
+    At the input to the function, we check the correctness of the date and send photos from Mars
+    """
     if re.search(r"\b\d{2}.\d{2}.\d{4}\b", message.text):
         ParamMars.earth_date = datetime.strptime(message.text, "%d.%m.%Y")
-        pictures_from_mars = api_request_mars(ParamMars.earth_date, ParamMars.camera)
+        pictures_from_mars: list = api_request_mars(ParamMars.earth_date, ParamMars.camera)
 
         for i_picture in pictures_from_mars:
             bot.send_message(message.chat.id, i_picture)
@@ -87,43 +107,57 @@ def send_pict_from_mars(message: Message) -> None:
                                           "Посмотреть все команды можно через команду /start")
     else:
         bot.send_message(message.chat.id, "Дата задана не в нужном формате. Пример: 01.01.2023. Попробуй ещё раз.\n")
-        return
 
 
 @bot.message_handler(commands=["image_day"])
 def set_date_for_img_day(message: Message) -> None:
+    r"""
+    Message handler: '\image_day' from the user.
+    We ask the user for a date
+    Change the bot state to send_img_day
+    """
     bot.send_message(
         message.chat.id,
-        "Я могу отправить тебе фото дня из архива NASA, но для этого мне понадобится твоя дата."
-        "\nВведи дату, в формате: 01.01.2023 "
+        "Я могу отправить тебе фото дня из архива NASA, но для этого мне нужна от тебя дата."
+        "\nВведи дату, в формате: 01.01.2023"
     )
     bot.set_state(message.from_user.id, States.send_img_day, message.chat.id)
 
 
 @bot.message_handler(state=States.send_img_day)
 def send_img_day(message: Message) -> None:
-    count = 0
-    if count == 2:
-        bot.set_state(message.from_user.id, States.base, message.chat.id)
-    elif re.search(r"\b\d{2}.\d{2}.\d{4}\b", message.text):
-        date_time = datetime.strptime(message.text, "%d.%m.%Y")
-        picture_and_description = api_request_img_day(date_time.date())
+    """
+    Bot state handler send_img_day.
+    At the input to the function, we check that the date is correct and send a picture of the day
+    """
+    if re.search(r"\b\d{2}.\d{2}.\d{4}\b", message.text):
+        date_time: datetime = datetime.strptime(message.text, "%d.%m.%Y")
+        picture_and_description: str = api_request_img_day(date_time.date())
         bot.send_message(message.chat.id, picture_and_description)
+        bot.send_message(message.chat.id,
+                         "Если хочешь получить картинку за другую дату, можешь просто ввести её\n"
+                         "Посмотреть все команды можно через команду /start"
+                         )
     else:
         bot.send_message(message.chat.id, "Дата задана не в нужном формате. Пример: 01.01.2023. Попробуй ещё раз.\n"
                                           "Посмотреть все команды можно через команду /start")
-        count += 1
-        return
 
 
 @bot.message_handler(content_types=["text"])
 def hello_send(message: Message) -> None:
+    """
+    The handler for all user messages.
+    If we catch a greeting from a user, we will greet you back
+    """
     if re.search(r"[Пп]рив|[Зз]дравству[ий]|[Хх]а[ийю]|[Hh]i|[Hh]ello|[Зз]даров", message.text):
         user = User.select().where(User.username == message.from_user.username).first()
-        hello_commands = ("Привет", "Здравствуй", "Хай", "Приветствую", "Хаю-хай", "Hello", "Hi",
-                          "Ну привет")
+        hello_commands: tuple = ("Привет", "Здравствуй", "Хай", "Приветствую", "Хаю-хай", "Hello", "Hi", "Ну привет")
         if user:
-            bot.send_message(message.chat.id, random.choice(hello_commands) + ", " + message.from_user.first_name)
+            if message.from_user.first_name:
+                user_name: str = message.from_user.first_name
+            else:
+                user_name: str = message.from_user.username
+            bot.send_message(message.chat.id, random.choice(hello_commands) + ", " + user_name)
         else:
             bot.send_message(message.chat.id, random.choice(hello_commands) + "\nДля регистрации, "
                                                                               "используй команду /start")

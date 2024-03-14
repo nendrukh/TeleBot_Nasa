@@ -11,7 +11,7 @@ class BaseModel(Model):
 class User(BaseModel):
     user_id = IntegerField(primary_key=True)
     username = CharField()
-    first_name = CharField()
+    first_name = CharField(null="True")
     last_name = CharField(null="True")
 
 
