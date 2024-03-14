@@ -125,10 +125,8 @@ def set_date_for_img_day(message: Message) -> None:
     We ask the user for a date
     Change the bot state to send_img_day
     """
-    bot.send_message(message.chat.id, """
-Я могу отправить тебе фото дня из архива NASA, но для этого мне нужна от тебя дата.
-Введи дату, в формате: 01.01.2023
-""")
+    bot.send_message(message.chat.id,
+                     "Я могу отправить тебе фото дня из архива NASA, но для этого мне нужна от тебя дата. Введи дату, в формате: 01.01.2023")
     bot.set_state(message.from_user.id, States.send_img_day, message.chat.id)
 
 
@@ -143,7 +141,7 @@ def send_img_day(message: Message) -> None:
         picture_and_description: str = api_request_img_day(date_time.date())
         bot.send_message(message.chat.id, picture_and_description)
         bot.send_message(message.chat.id, """
-Если хочешь получить картинку за другую дату, можешь просто ввести её
+Если хочешь получить картинку за другую дату, можешь просто ввести её.
 Посмотреть все команды можно через команду /start
 """)
     else:
