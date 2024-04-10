@@ -98,9 +98,9 @@ def set_sol_for_mars(message: Message) -> None:
         file_logger.debug(f"The camera is not listed in the correct format: {message.text}")
         bot.send_message(message.chat.id, "Камера указана не в правильном формате.")
         bot.send_message(message.chat.id, """
-Для выбора фронтальной камеры напиши: фронт
-Для задней камеры напиши: задняя
-Для мачтовой камеры напиши: мачта
+Для выбора фронтальной камеры напиши: Фронт
+Для задней камеры напиши: Задняя
+Для мачтовой камеры напиши: Мачта
 """)
         bot.send_message(message.chat.id, "Посмотреть все команды можно через команду /start")
 
