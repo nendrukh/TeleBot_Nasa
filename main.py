@@ -1,5 +1,7 @@
 import random
 import re
+import logging.config
+from logging_config import dict_config
 from api import api_request_img_day, api_request_mars, ParamMars
 from datetime import datetime
 from config import BOT_TOKEN
@@ -10,6 +12,9 @@ import telebot
 from telebot.storage import StateMemoryStorage
 from telebot.types import Message
 from telebot import custom_filters
+
+logging.config.dictConfig(dict_config)
+file_logger = logging.getLogger("file_logger")
 
 state_storage = StateMemoryStorage()
 bot = telebot.TeleBot(BOT_TOKEN, state_storage=state_storage)
@@ -33,6 +38,7 @@ def start_bot(message: Message) -> None:
             first_name=first_name,
             last_name=last_name,
         )
+        file_logger.info(f"New user {username} added. First_name: {first_name}")
         bot.send_message(message.chat.id, """
 Привет! Я новый бот в телеграмме 🙂
 Я интегрирован с NASA.
@@ -41,6 +47,7 @@ def start_bot(message: Message) -> None:
 - /mars Получить фотки с Марса, а именно с марсоходов с разных камер
 """)
     except:
+        file_logger.info(f"User greeting: {username}, {first_name}")
         bot.send_message(message.chat.id, f"Рад снова видеть тебя, {username} 🙂")
         bot.send_message(message.chat.id, """
 Доступные команды:
@@ -83,11 +90,12 @@ def set_sol_for_mars(message: Message) -> None:
     if re.search(r"\b([Фф]ронт|[Зз]адняя|[Мм]ачта)\b", message.text):
         ParamMars.camera = message.text
         bot.send_message(message.chat.id, """
-Теперь укажи, пожалуйста, дату за которую отправить фотки
+Теперь укажи, пожалуйста, дату за которую отправить фотки.
 В формате: 01.01.2023
 """)
         bot.set_state(message.from_user.id, States.send_pictures, message.chat.id)
     else:
+        file_logger.debug(f"The camera is not listed in the correct format: {message.text}")
         bot.send_message(message.chat.id, "Камера указана не в правильном формате.")
         bot.send_message(message.chat.id, """
 Для выбора фронтальной камеры напиши: фронт
@@ -110,11 +118,12 @@ def send_pict_from_mars(message: Message) -> None:
         for i_picture in pictures_from_mars:
             bot.send_message(message.chat.id, i_picture)
         bot.send_message(message.chat.id, """
-Если хочешь сменить дату, просто напиши её
+Если хочешь сменить дату, просто напиши её.
 Если хочешь сменить камеру, введи заново /mars
 Посмотреть все команды можно через команду /start
 """)
     else:
+        file_logger.debug(f"The date is not in the required format: {message.text}")
         bot.send_message(message.chat.id, "Дата задана не в нужном формате. Пример: 01.01.2023. Попробуй ещё раз.")
 
 
@@ -145,6 +154,7 @@ def send_img_day(message: Message) -> None:
 Посмотреть все команды можно через команду /start
 """)
     else:
+        file_logger.debug(f"The date is not in the required format: {message.text}")
         bot.send_message(message.chat.id, """
 Дата задана не в нужном формате. Пример: 01.01.2023. Попробуй ещё раз.
 Посмотреть все команды можно через команду /start
@@ -170,6 +180,7 @@ def hello_send(message: Message) -> None:
             bot.send_message(message.chat.id,
                              random.choice(hello_commands) + "\nДля регистрации, используй команду /start")
     else:
+        file_logger.debug(f"Didn't understand the user's intent: {message.text}")
         bot.send_message(message.chat.id, "Не понял тебя. Для помощи и вызова команд можешь написать /start")
     bot.set_state(message.from_user.id, States.base, message.chat.id)
 

@@ -1,7 +1,12 @@
 import requests
 import datetime
+import logging.config
+from logging_config import dict_config
 from requests import Response
 from config import API_KEY
+
+logging.config.dictConfig(dict_config)
+file_logger = logging.getLogger("file_logger")
 
 
 class ParamMars:
@@ -23,6 +28,7 @@ def api_request_img_day(date: datetime.date) -> str:
     response_json = response.json()
 
     if response.status_code == 400:
+        file_logger.error(f"Picture day for date: {date} empty")
         now_date: datetime.date = datetime.datetime.now()
         return f"""
 За эту дату фоток нет, введи другую.
@@ -63,6 +69,7 @@ def api_request_mars(earth_date: datetime.date, camera: str) -> list:
     response_json: dict = response.json()
 
     if len(response_json["photos"]) == 0:
+        file_logger.error(f"No photos from mars for the {earth_date}, camera: {camera}")
         return list(["Фоток нет. Попробуй другую дату."])
 
     count: int = 0
